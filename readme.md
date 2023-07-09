@@ -21,12 +21,17 @@ $ escaping-figures-game-cli --help
     $ escaping-figures-game-cli
 
   Options
-      --no-show-banner  Whether to use banner at the top
+      --banner, -b      Do not use banner at the top
+      --colors, -c      Display figures with different colors
+      --speed, -s       Set game speed (the lower the value, the more difficult the passage)
+      --fast-speed, -f  Turn on fast speed mode
 
   Examples
       $ escaping-figures-game-cli
-      $ escaping-figures-game-cli --no-show-banner
-      $ escaping-figures-game-cli --use-colors
+      $ escaping-figures-game-cli --speed 17
+      $ escaping-figures-game-cli --speed 4
+      $ escaping-figures-game-cli --banner
+      $ escaping-figures-game-cli --colors
       $ escaping-figures-game-cli --fast-speed
 ```
 

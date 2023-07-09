@@ -10,6 +10,7 @@ type Props = {
 	isShowBanner?: boolean;
 	isColorsEnabled?: boolean;
 	isUsingFastSpeed?: boolean;
+	speed?: number;
 };
 type AnswerItem = 'CORRECT' | 'WRONG' | 'WAITING';
 
@@ -25,11 +26,12 @@ const breakWithSpaces = (currFigures: string[]): string[] => {
 		const leftSpaces = getRepeatedSpaces(rand(7));
 		const rightSpaces = getRepeatedSpaces(rand(7));
 
-		if (i === 0) {
-			result.push(leftSpaces, figure);
-			continue;
-		} else if (i === currFigures.length) {
-			result.push(figure, rightSpaces);
+		if (i === 0 || i === currFigures.length) {
+			result.push(
+				i === 0 ? leftSpaces : figure,
+				i === currFigures.length ? rightSpaces : figure,
+			);
+
 			continue;
 		}
 
@@ -42,10 +44,18 @@ const breakWithSpaces = (currFigures: string[]): string[] => {
 const spacifyLines = (lines: string[][]) =>
 	lines.map((items: string[]) => breakWithSpaces(items));
 
+const isNumeric = (value: string): boolean =>
+	!Number.isNaN(value as any) && !Number.isNaN(Number.parseFloat(value));
+
+const calculateSpeedInMs = (speed: number) => ((speed + 30) / 10) * 150;
+
+const isNewSpeedInputCorrect = (value: string) =>
+	value === '' || isNumeric(value);
+
 const roundLines = [
 	[
-		figures.square,
-		figures.triangleUp,
+		figures.triangleDown,
+		figures.star,
 		figures.hamburger,
 		figures.triangleUp,
 		figures.musicNote,
@@ -66,7 +76,7 @@ const roundLines = [
 		figures.triangleDown,
 		figures.lozenge,
 		figures.musicNote,
-		figures.square,
+		figures.heart,
 		figures.hamburger,
 		figures.triangleDown,
 	],
@@ -74,7 +84,7 @@ const roundLines = [
 		figures.star,
 		figures.musicNote,
 		figures.hamburger,
-		figures.triangleLeft,
+		figures.heart,
 		figures.triangleDown,
 		figures.star,
 		figures.triangleLeft,
@@ -84,18 +94,27 @@ const roundLines = [
 		figures.lozenge,
 		figures.triangleLeft,
 		figures.star,
-		figures.square,
+		figures.heart,
 		figures.hamburger,
-		figures.triangleLeft,
+		figures.musicNote,
 	],
 	[
 		figures.triangleDown,
 		figures.star,
 		figures.hamburger,
 		figures.musicNote,
-		figures.triangleDown,
+		figures.triangleRight,
 		figures.square,
 		figures.lozenge,
+	],
+	[
+		figures.hamburger,
+		figures.triangleRight,
+		figures.lozenge,
+		figures.star,
+		figures.square,
+		figures.lozenge,
+		figures.triangleUp,
 	],
 ];
 
@@ -103,21 +122,22 @@ const cols: string[] = [
 	'red',
 	'green',
 	'blue',
-	'grey',
-	'black',
-	'purple',
-	'orange',
+	'magenta',
+	'yellow',
+	'whiteBright',
+	'cyan',
 ];
 const roundCols = R.map(
 	line => R.map(_ => cols[rand(cols.length)], line),
 	roundLines,
 );
 
-export {rand};
+export {rand, calculateSpeedInMs};
 
 export default function App({
 	isShowBanner = true,
 	isColorsEnabled = false,
+	speed = 10,
 	isUsingFastSpeed = false,
 }: Props) {
 	const [displayBanner, setDisplayBanner] = useState(isShowBanner);
@@ -133,6 +153,11 @@ export default function App({
 	const [figCount, setFigCount] = useState('');
 	const [withColors, setWithColors] = useState<boolean>(isColorsEnabled);
 	const [lastAnswer, setLastAnswer] = useState<AnswerItem>('WAITING');
+	const [gameSpeed, setGameSpeed] = useState(calculateSpeedInMs(speed));
+	const [isChangingSpeed, setIsChangingSpeed] = useState(false);
+	const [newChangingSpeedValue, setNewChangingSpeedValue] = useState(
+		String(speed),
+	);
 
 	const resetGame = () => {
 		setGameOver(false);
@@ -140,12 +165,14 @@ export default function App({
 		setScores(0);
 		setCurrentLines(spacifyLines(roundLines));
 		setCorrectlyAnswered([]);
+		setFigCount('');
 	};
 
 	useInput((key, _input) => {
 		if (gameOver) {
 			switch (key) {
 				case 'n': {
+					console.clear();
 					resetGame();
 
 					break;
@@ -158,7 +185,13 @@ export default function App({
 				}
 
 				case 'c': {
-					setWithColors(true);
+					setWithColors(!withColors);
+
+					break;
+				}
+
+				case 's': {
+					setIsChangingSpeed(true);
 
 					break;
 				}
@@ -177,12 +210,12 @@ export default function App({
 
 						setPadLeft(previousPadLeft => {
 							const widest: string[] = R.head(
-								R.sort((a, b) => (a.length > b.length ? 1 : -1), newRoundLines),
+								R.sort((a, b) => (a.length > b.length ? -1 : 1), newRoundLines),
 							);
 							const newPadLeft = previousPadLeft + 2;
 
 							// eslint-disable-next-line n/prefer-global/process
-							if (newPadLeft + widest.length + 10 > process.stdout.columns) {
+							if (newPadLeft + widest.length + 35 > process.stdout.columns) {
 								setGameOver(true);
 							}
 
@@ -192,14 +225,14 @@ export default function App({
 						return newRoundLines;
 					});
 				},
-				isUsingFastSpeed ? 450 : 1100,
+				isUsingFastSpeed ? 450 : gameSpeed,
 			);
 			return () => {
 				clearInterval(gameInterval);
 			};
 		}
 		/* eslint-enable max-nested-callbacks */
-	}, [padLeft, displayBanner, gameOver, isUsingFastSpeed]);
+	}, [padLeft, displayBanner, gameOver, isUsingFastSpeed, gameSpeed]);
 
 	return (
 		<>
@@ -211,11 +244,79 @@ export default function App({
 				</Box>
 			)}
 			{gameOver ? (
-				<Box>
-					<Text>
-						The round is finished! Score {scores} out of {allFigures.length}
-					</Text>
-				</Box>
+				isChangingSpeed ? (
+					<Box>
+						<Text
+							color={isNewSpeedInputCorrect(newChangingSpeedValue) ? '' : 'red'}
+						>
+							New speed:{' '}
+						</Text>
+						<TextInput
+							value={newChangingSpeedValue}
+							onChange={setNewChangingSpeedValue}
+							onSubmit={value => {
+								if (isNumeric(value)) {
+									const newSpeed = Number(value);
+
+									setGameSpeed(calculateSpeedInMs(newSpeed));
+									setNewChangingSpeedValue(value);
+									setIsChangingSpeed(false);
+								}
+							}}
+						/>
+					</Box>
+				) : (
+					<Box flexDirection="column">
+						<Box paddingY={1} flexDirection="column" alignItems="center">
+							<Text>
+								The game is over! Score: {scores} out of {allFigures.length}
+							</Text>
+						</Box>
+						<Box paddingTop={1} flexDirection="column" alignItems="center">
+							<Box>
+								<Text>Press: </Text>
+							</Box>
+							<Box flexDirection="column">
+								<Box>
+									<Text bold color="green">
+										n
+									</Text>
+									<Text> - start a new round</Text>
+								</Box>
+								<Box>
+									<Text bold color="cyan">
+										s
+									</Text>
+									<Text>
+										{' '}
+										- change game speed (the lower the value, the more difficult
+										the passage; current: {newChangingSpeedValue})
+									</Text>
+								</Box>
+								<Box>
+									<Text bold color="magenta">
+										b
+									</Text>
+									<Text>
+										{' '}
+										- toggle `showBanner` setting (current:{' '}
+										{displayBanner ? 'enabled' : 'disabled'})
+									</Text>
+								</Box>
+								<Box>
+									<Text bold color="yellow">
+										c
+									</Text>
+									<Text>
+										{' '}
+										- use colors (current: {withColors ? 'enabled' : 'disabled'}
+										)
+									</Text>
+								</Box>
+							</Box>
+						</Box>
+					</Box>
+				)
 			) : (
 				<Box flexDirection="column">
 					<Box flexDirection="column" alignItems="center" paddingBottom={1}>
@@ -230,9 +331,16 @@ export default function App({
 										{lines.map((fig: string, j: number) => {
 											return (
 												<Box key={nanoid(10)} flexDirection="column">
-													<Text color={withColors ? roundCols[i]![j] : ''}>
+													<Text
+														color={
+															withColors
+																? roundCols[i]![j % roundCols[0]!.length]
+																: 'green'
+														}
+													>
 														{fig}
 													</Text>
+													<Newline />
 												</Box>
 											);
 										})}
@@ -245,9 +353,8 @@ export default function App({
 						<Box paddingTop={1}>
 							<Box flexDirection="column">
 								<Text>
-									How many times the &apos;
-									{allFigures[correctlyAnswered.length]}&apos;
-									{' occurs? '}
+									How many times the following figure occurs?
+									{` ${allFigures[correctlyAnswered.length]!}: `}
 								</Text>
 							</Box>
 							<TextInput
@@ -279,6 +386,8 @@ export default function App({
 											setLastAnswer('WAITING');
 											return previousScores + 1;
 										});
+									} else {
+										setLastAnswer('WRONG');
 									}
 								}}
 							/>

@@ -27,6 +27,7 @@ $ escaping-figures-game-cli --help
       $ escaping-figures-game-cli
       $ escaping-figures-game-cli --no-show-banner
       $ escaping-figures-game-cli --use-colors
+      $ escaping-figures-game-cli --fast-speed
 ```
 
 ## License

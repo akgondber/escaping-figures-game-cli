@@ -16,6 +16,7 @@ const cli = meow(
 		$ escaping-figures-game-cli
 		$ escaping-figures-game-cli --no-show-banner
 		$ escaping-figures-game-cli --use-colors
+		$ escaping-figures-game-cli --fast-speed
 `,
 	{
 		importMeta: import.meta,
@@ -28,6 +29,10 @@ const cli = meow(
 				type: 'boolean',
 				default: false,
 			},
+			fastSpeed: {
+				type: 'boolean',
+				default: false,
+			},
 		},
 	},
 );
@@ -36,5 +41,6 @@ render(
 	<App
 		isShowBanner={cli.flags.showBanner}
 		isColorsEnabled={cli.flags.useColors}
+		isUsingFastSpeed={cli.flags.fastSpeed}
 	/>,
 );

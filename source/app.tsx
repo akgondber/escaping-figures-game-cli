@@ -9,6 +9,7 @@ import R from 'rambda';
 type Props = {
 	isShowBanner?: boolean;
 	isColorsEnabled?: boolean;
+	isUsingFastSpeed?: boolean;
 };
 type AnswerItem = 'CORRECT' | 'WRONG' | 'WAITING';
 
@@ -117,6 +118,7 @@ export {rand};
 export default function App({
 	isShowBanner = true,
 	isColorsEnabled = false,
+	isUsingFastSpeed = false,
 }: Props) {
 	const [displayBanner, setDisplayBanner] = useState(isShowBanner);
 	const [gameOver, setGameOver] = useState(false);
@@ -168,33 +170,36 @@ export default function App({
 	useEffect(() => {
 		/* eslint-disable max-nested-callbacks */
 		if (!gameOver) {
-			const gameInterval = setInterval(() => {
-				setCurrentLines((_previousCurrentLines: string[][]): string[][] => {
-					const newRoundLines = spacifyLines(roundLines);
+			const gameInterval = setInterval(
+				() => {
+					setCurrentLines((_previousCurrentLines: string[][]): string[][] => {
+						const newRoundLines = spacifyLines(roundLines);
 
-					setPadLeft(previousPadLeft => {
-						const widest: string[] = R.head(
-							R.sort((a, b) => (a.length > b.length ? 1 : -1), newRoundLines),
-						);
-						const newPadLeft = previousPadLeft + 2;
+						setPadLeft(previousPadLeft => {
+							const widest: string[] = R.head(
+								R.sort((a, b) => (a.length > b.length ? 1 : -1), newRoundLines),
+							);
+							const newPadLeft = previousPadLeft + 2;
 
-						// eslint-disable-next-line n/prefer-global/process
-						if (newPadLeft + widest.length + 10 > process.stdout.columns) {
-							setGameOver(true);
-						}
+							// eslint-disable-next-line n/prefer-global/process
+							if (newPadLeft + widest.length + 10 > process.stdout.columns) {
+								setGameOver(true);
+							}
 
-						return newPadLeft;
+							return newPadLeft;
+						});
+
+						return newRoundLines;
 					});
-
-					return newRoundLines;
-				});
-			}, 1200);
+				},
+				isUsingFastSpeed ? 450 : 1100,
+			);
 			return () => {
 				clearInterval(gameInterval);
 			};
 		}
 		/* eslint-enable max-nested-callbacks */
-	}, [padLeft, displayBanner, gameOver]);
+	}, [padLeft, displayBanner, gameOver, isUsingFastSpeed]);
 
 	return (
 		<>
@@ -240,7 +245,8 @@ export default function App({
 						<Box paddingTop={1}>
 							<Box flexDirection="column">
 								<Text>
-									How many times the {allFigures[correctlyAnswered.length]}{' '}
+									How many times the &apos;
+									{allFigures[correctlyAnswered.length]}&apos;
 									{' occurs? '}
 								</Text>
 							</Box>

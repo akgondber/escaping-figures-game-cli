@@ -1,0 +1,91 @@
+{
+	"name": "escaping-figures-game-cli",
+	"description": "Count figure's occurences in the escaping figures matrix",
+	"version": "1.0.0",
+	"license": "MIT",
+	"author": "Rushan Alyautdinov <akgondber@gmail.com>",
+	"homepage": "https://github.com/akgondber/escaping-figures-game-cli",
+	"repository": "akgondber/escaping-figures-game-cli",
+	"keywords": [
+		"game",
+		"figures",
+		"figure",
+		"cli",
+		"count",
+		"fun",
+		"attention",
+		"memory",
+		"reaction",
+		"concentration",
+		"activerest",
+		"rest"
+	],
+	"bin": "dist/cli.js",
+	"type": "module",
+	"engines": {
+		"node": ">=16"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"test": "prettier --check . && xo && ava",
+		"lint": "xo",
+		"go": "node dist/cli.js",
+		"prettify": "prettier . --write",
+		"xofix": "xo --fix",
+		"jtest": "ava",
+		"play": "node dist/cli.js"
+	},
+	"files": [
+		"dist"
+	],
+	"dependencies": {
+		"figures": "^5.0.0",
+		"ink": "^4.2.0",
+		"ink-gradient": "^3.0.0",
+		"ink-text-input": "^5.0.1",
+		"meow": "^12.0.1",
+		"nanoid": "^4.0.2",
+		"rambda": "^8.1.0",
+		"react": "^18.2.0"
+	},
+	"devDependencies": {
+		"@sindresorhus/tsconfig": "^3.0.1",
+		"@types/ink-testing-library": "^1.0.1",
+		"@types/react": "^18.0.32",
+		"ava": "^5.2.0",
+		"chalk": "^5.2.0",
+		"eslint-config-xo-react": "^0.27.0",
+		"eslint-plugin-react": "^7.32.2",
+		"eslint-plugin-react-hooks": "^4.6.0",
+		"prettier": "^2.8.7",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.0.3",
+		"xo": "^0.54.2"
+	},
+	"ava": {
+		"extensions": {
+			"ts": "module",
+			"tsx": "module"
+		},
+		"nodeArguments": [
+			"--loader=ts-node/esm"
+		]
+	},
+	"xo": {
+		"extends": "xo-react",
+		"prettier": true,
+		"rules": {
+			"react/prop-types": "off"
+		}
+	},
+	"prettier": {
+		"useTabs": true,
+		"semi": true,
+		"singleQuote": true,
+		"quoteProps": "as-needed",
+		"bracketSpacing": false,
+		"arrowParens": "avoid",
+		"trailingComma": "all"
+	}
+}

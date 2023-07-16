@@ -1,7 +1,7 @@
 {
 	"name": "escaping-figures-game-cli",
 	"description": "Count figure's occurences in the escaping figures matrix",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"license": "MIT",
 	"author": "Rushan Alyautdinov <akgondber@gmail.com>",
 	"homepage": "https://github.com/akgondber/escaping-figures-game-cli",

@@ -18,6 +18,10 @@ const rand = (max: number): number => {
 	return Math.floor(Math.random() * max);
 };
 
+const randItem = (items: string[]): string => {
+	return items[rand(items.length)]!;
+};
+
 const getRepeatedSpaces = (n: number): string => R.repeat(' ', n).join('');
 
 const breakWithSpaces = (currFigures: string[]): string[] => {
@@ -52,71 +56,207 @@ const calculateSpeedInMs = (speed: number) => ((speed + 30) / 10) * 150;
 const isNewSpeedInputCorrect = (value: string) =>
 	value === '' || isNumeric(value);
 
-const roundLines = [
-	[
-		figures.triangleDown,
-		figures.star,
-		figures.hamburger,
-		figures.triangleUp,
-		figures.musicNote,
-		figures.hamburger,
-		figures.triangleDown,
-	],
-	[
+const flattenUniq = R.compose(R.uniq, R.flatten);
+
+type CountBy = Record<string, number>;
+
+type FigCoords = {
+	coords: string;
+	fig: string;
+};
+
+type GameStoreItem = {
+	roundLines: string[][];
+	currentLines: string[][];
+	score: number;
+	correctAnswers: number;
+	padLeft: number;
+};
+
+type UpdatableGameStoreProps = Partial<GameStoreItem>;
+
+const getCoordsOfItem = (item: string, multiArray: string[][]): number[][] => {
+	const indexes: number[][] = [];
+
+	R.times(i => {
+		R.times(j => {
+			if (multiArray[i]![j] === item) {
+				indexes.push([i, j]);
+			}
+		}, multiArray[i]!.length);
+	}, multiArray.length);
+
+	return indexes;
+};
+
+const getCoordsIndices = (n: number, source: number[][]): number[][] => {
+	const result: number[][] = [];
+	if (n > source.length) {
+		return result;
+	}
+
+	let selectableItems = R.clone(source);
+
+	R.times((_i: number) => {
+		const item = selectableItems[rand(selectableItems.length)]!;
+
+		result.push(item);
+
+		selectableItems = R.dropRepeats(selectableItems);
+	}, n);
+
+	return result;
+};
+
+const getCountByIdentityFlattened = (multiArray: string[][]): CountBy =>
+	R.countBy((item: string) => item, R.flatten(multiArray));
+
+const getCoords = (coords: string): number[] => coords.split('x').map(Number);
+
+const generateRandomFigures = (size: number): string[][] => {
+	const figSamples = [
 		figures.lozenge,
 		figures.triangleUp,
-		figures.square,
-		figures.lozenge,
-		figures.star,
 		figures.triangleLeft,
-		figures.musicNote,
-	],
-	[
-		figures.hamburger,
-		figures.triangleDown,
-		figures.lozenge,
-		figures.musicNote,
-		figures.heart,
-		figures.hamburger,
-		figures.triangleDown,
-	],
-	[
-		figures.star,
-		figures.musicNote,
-		figures.hamburger,
-		figures.heart,
-		figures.triangleDown,
-		figures.star,
-		figures.triangleLeft,
-	],
-	[
 		figures.triangleRight,
-		figures.lozenge,
-		figures.triangleLeft,
-		figures.star,
-		figures.heart,
-		figures.hamburger,
-		figures.musicNote,
-	],
-	[
 		figures.triangleDown,
-		figures.star,
 		figures.hamburger,
+		figures.star,
 		figures.musicNote,
-		figures.triangleRight,
-		figures.square,
-		figures.lozenge,
-	],
-	[
-		figures.hamburger,
-		figures.triangleRight,
-		figures.lozenge,
-		figures.star,
-		figures.square,
-		figures.lozenge,
-		figures.triangleUp,
-	],
-];
+		figures.lineUpBoldLeftBoldRightBold,
+	];
+	let selectableFigures = R.clone(figSamples);
+
+	let result: string[][] = [];
+	const addedElements: string[] = [];
+	R.times((i: number) => {
+		result[i] ||= [];
+
+		R.times((j: number) => {
+			const randomFigure = selectableFigures[rand(selectableFigures.length)]!;
+			addedElements.push(randomFigure);
+			result[i]![j] = randomFigure;
+
+			R.forEach((fig: string) => {
+				if (R.countBy(R.identity, addedElements)[fig]! > 9) {
+					selectableFigures = R.dropRepeats(selectableFigures);
+				}
+			}, figSamples);
+
+			if (R.isEmpty(selectableFigures)) {
+				selectableFigures = R.clone(figSamples);
+			}
+		}, size);
+	}, size);
+	const usedFigures: string[] = flattenUniq(result);
+
+	const groupedByFreq: FigCoords[] = R.flatten(
+		R.times(i => {
+			return R.times(
+				(j: number) => ({
+					coords: `${i}x${j}`,
+					fig: result[i]![j],
+				}),
+				result[i]!.length,
+			);
+		}, result.length),
+	);
+
+	const notUsedFigures = R.difference(figSamples, usedFigures)!;
+	const insertedIndexes: number[][] = [];
+
+	if (!R.isEmpty(notUsedFigures)) {
+		let x: number;
+		let y: number;
+		let coords: number[];
+
+		const indexPairs: any[] = R.take(
+			4,
+			R.sortBy(
+				a => -a[1].length,
+				R.toPairs(R.groupBy((item: FigCoords) => item.fig, groupedByFreq)),
+			),
+		);
+		const frequentlyOccuring: FigCoords[] = indexPairs[
+			rand(indexPairs.length)
+		][1] as FigCoords[];
+		let randomFigItem: FigCoords =
+			frequentlyOccuring[rand(frequentlyOccuring.length)]!;
+
+		R.times((j: number) => {
+			coords = getCoords(randomFigItem.coords);
+			x = coords[0]!;
+			y = coords[1]!;
+
+			while (R.includes(coords, insertedIndexes)) {
+				randomFigItem = frequentlyOccuring[rand(frequentlyOccuring.length)]!;
+				coords = getCoords(randomFigItem.coords);
+				x = coords[0]!;
+				y = coords[1]!;
+			}
+
+			insertedIndexes.push([x, y]);
+			result[x]![y] = notUsedFigures[j % notUsedFigures.length]!;
+		}, notUsedFigures.length);
+	}
+
+	const countByAppearanceFrequency = R.filter(
+		value => value > 8,
+		getCountByIdentityFlattened(result),
+	);
+
+	if (!R.isEmpty(countByAppearanceFrequency)) {
+		R.forEach((howMany: number, figure: string) => {
+			R.times(
+				(m: number) => {
+					let insertedItemsExclusions: string[] = [];
+					const indexesToReplace = getCoordsIndices(
+						4 + m,
+						getCoordsOfItem(figure, result),
+					);
+					const itemsToFilter = getCountByIdentityFlattened(result);
+					let itemsNotTakenManyTimes = R.take(
+						4,
+						R.sortBy(
+							(a: string): number => itemsToFilter[a]!,
+							R.keys<Record<string, number>>(itemsToFilter),
+						),
+					);
+					const replacedItems: CountBy = {};
+
+					R.forEach(indexPair => {
+						const valueToSet = randItem(itemsNotTakenManyTimes);
+						replacedItems[valueToSet] = replacedItems[valueToSet] ?? 0;
+						replacedItems[valueToSet]++;
+						insertedItemsExclusions = [
+							...insertedItemsExclusions,
+							...R.keys<Record<string, number>>(
+								R.filter(v => v > 3, replacedItems),
+							),
+						];
+						result = R.set(
+							R.lensPath(`${indexPair[0]!}.${indexPair[1]!}`),
+							valueToSet,
+							result,
+						);
+
+						if (!R.isEmpty(insertedItemsExclusions)) {
+							itemsNotTakenManyTimes = R.difference(
+								itemsNotTakenManyTimes,
+								insertedItemsExclusions,
+							);
+						}
+					}, indexesToReplace);
+				},
+				howMany > 8 ? howMany - 5 : 2,
+			);
+		}, countByAppearanceFrequency);
+	}
+
+	return result;
+};
+
+const firstRoundLines = generateRandomFigures(7);
 
 const cols: string[] = [
 	'red',
@@ -129,7 +269,7 @@ const cols: string[] = [
 ];
 const roundCols = R.map(
 	line => R.map(_ => cols[rand(cols.length)], line),
-	roundLines,
+	firstRoundLines,
 );
 
 export {rand, calculateSpeedInMs};
@@ -142,14 +282,15 @@ export default function App({
 }: Props) {
 	const [displayBanner, setDisplayBanner] = useState(isShowBanner);
 	const [gameOver, setGameOver] = useState(false);
-	const [scores, setScores] = useState(0);
-	const [padLeft, setPadLeft] = useState(0);
-	const [currentLines, setCurrentLines] = useState<string[][]>(
-		spacifyLines(roundLines),
-	);
-	const countByFig = R.countBy((item: string) => item, R.flatten(roundLines));
-	const allFigures: string[] = R.uniq(R.flatten(roundLines));
-	const [correctlyAnswered, setCorrectlyAnswered] = useState<string[]>([]);
+	const [gameStore, setGameStore] = useState<GameStoreItem>({
+		roundLines: firstRoundLines,
+		currentLines: spacifyLines(firstRoundLines),
+		score: 0,
+		correctAnswers: 0,
+		padLeft: 0,
+	});
+
+	const allFigures: string[] = R.uniq(R.flatten(gameStore.roundLines));
 	const [figCount, setFigCount] = useState('');
 	const [withColors, setWithColors] = useState<boolean>(isColorsEnabled);
 	const [lastAnswer, setLastAnswer] = useState<AnswerItem>('WAITING');
@@ -160,19 +301,22 @@ export default function App({
 	);
 
 	const resetGame = () => {
+		const newRoundLines = generateRandomFigures(7);
 		setGameOver(false);
-		setPadLeft(0);
-		setScores(0);
-		setCurrentLines(spacifyLines(roundLines));
-		setCorrectlyAnswered([]);
 		setFigCount('');
+		setGameStore({
+			padLeft: 0,
+			roundLines: newRoundLines,
+			currentLines: spacifyLines(newRoundLines),
+			score: 0,
+			correctAnswers: 0,
+		});
 	};
 
 	useInput((key, _input) => {
 		if (gameOver) {
 			switch (key) {
 				case 'n': {
-					console.clear();
 					resetGame();
 
 					break;
@@ -201,28 +345,28 @@ export default function App({
 	});
 
 	useEffect(() => {
-		/* eslint-disable max-nested-callbacks */
 		if (!gameOver) {
 			const gameInterval = setInterval(
 				() => {
-					setCurrentLines((_previousCurrentLines: string[][]): string[][] => {
-						const newRoundLines = spacifyLines(roundLines);
+					setGameStore(previousGameStore => {
+						const newRoundLines = spacifyLines(gameStore.roundLines);
+						const newPadLeft = previousGameStore.padLeft + 2;
 
-						setPadLeft(previousPadLeft => {
-							const widest: string[] = R.head(
-								R.sort((a, b) => (a.length > b.length ? -1 : 1), newRoundLines),
-							);
-							const newPadLeft = previousPadLeft + 2;
+						const widest: string[] = R.head(
+							R.sort((a, b) => (a.length > b.length ? -1 : 1), newRoundLines),
+						);
 
-							// eslint-disable-next-line n/prefer-global/process
-							if (newPadLeft + widest.length + 35 > process.stdout.columns) {
-								setGameOver(true);
-							}
+						const updatableProps: UpdatableGameStoreProps = {
+							padLeft: newPadLeft,
+							currentLines: newRoundLines,
+						};
 
-							return newPadLeft;
-						});
+						// eslint-disable-next-line n/prefer-global/process
+						if (newPadLeft + widest.length + 35 > process.stdout.columns) {
+							setGameOver(true);
+						}
 
-						return newRoundLines;
+						return R.mergeRight(previousGameStore, updatableProps);
 					});
 				},
 				isUsingFastSpeed ? 450 : gameSpeed,
@@ -231,8 +375,10 @@ export default function App({
 				clearInterval(gameInterval);
 			};
 		}
-		/* eslint-enable max-nested-callbacks */
-	}, [padLeft, displayBanner, gameOver, isUsingFastSpeed, gameSpeed]);
+	}, [displayBanner, gameOver, isUsingFastSpeed, gameSpeed, gameStore]);
+
+	const {correctAnswers, currentLines, roundLines, padLeft} = gameStore;
+	const currentFigure = allFigures[correctAnswers]!;
 
 	return (
 		<>
@@ -269,7 +415,8 @@ export default function App({
 					<Box flexDirection="column">
 						<Box paddingY={1} flexDirection="column" alignItems="center">
 							<Text>
-								The game is over! Score: {scores} out of {allFigures.length}
+								The game is over! Score: {gameStore.score} out of{' '}
+								{allFigures.length}
 							</Text>
 						</Box>
 						<Box paddingTop={1} flexDirection="column" alignItems="center">
@@ -320,7 +467,7 @@ export default function App({
 			) : (
 				<Box flexDirection="column">
 					<Box flexDirection="column" alignItems="center" paddingBottom={1}>
-						<Text>Score: {scores}</Text>
+						<Text>Score: {gameStore.score}</Text>
 					</Box>
 					<Box>
 						<Newline />
@@ -330,7 +477,7 @@ export default function App({
 									<Box key={nanoid(10)}>
 										{lines.map((fig: string, j: number) => {
 											return (
-												<Box key={nanoid(10)} flexDirection="column">
+												<Text key={nanoid(10)}>
 													<Text
 														color={
 															withColors
@@ -341,7 +488,7 @@ export default function App({
 														{fig}
 													</Text>
 													<Newline />
-												</Box>
+												</Text>
 											);
 										})}
 									</Box>
@@ -353,8 +500,10 @@ export default function App({
 						<Box paddingTop={1}>
 							<Box flexDirection="column">
 								<Text>
-									How many times the following figure occurs?
-									{` ${allFigures[correctlyAnswered.length]!}: `}
+									<Text bold>
+										How many times the figure &quot;{currentFigure}&quot;
+										occurs?
+									</Text>{' '}
 								</Text>
 							</Box>
 							<TextInput
@@ -365,27 +514,25 @@ export default function App({
 								}}
 								onSubmit={value => {
 									if (
-										countByFig[allFigures[correctlyAnswered.length]!] ===
+										getCountByIdentityFlattened(roundLines)[currentFigure] ===
 										Number(value)
 									) {
 										setLastAnswer('CORRECT');
-										setScores(previousScores => {
-											setCorrectlyAnswered(previousCorrectly => {
-												const newCorrectlyAnswered = [
-													...previousCorrectly,
-													allFigures[correctlyAnswered.length]!,
-												];
+										setGameStore(previousGameStore =>
+											R.mergeRight(previousGameStore, {
+												score: R.add(1, previousGameStore.score),
+												correctAnswers: R.add(
+													1,
+													previousGameStore.correctAnswers,
+												),
+												gameOver:
+													previousGameStore.correctAnswers ===
+													allFigures.length - 1,
+											}),
+										);
 
-												if (newCorrectlyAnswered.length === allFigures.length) {
-													setGameOver(true);
-												}
-
-												return newCorrectlyAnswered;
-											});
-											setFigCount('');
-											setLastAnswer('WAITING');
-											return previousScores + 1;
-										});
+										setFigCount('');
+										setLastAnswer('WAITING');
 									} else {
 										setLastAnswer('WRONG');
 									}

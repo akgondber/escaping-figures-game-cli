@@ -2,11 +2,11 @@ import chalk from 'chalk';
 import test from 'ava';
 import App, {rand} from './source/app.js';
 
-test('greet unknown user', t => {
+test('App is a function', t => {
 	t.true(typeof App === 'function');
 	t.true(`Tests are ${chalk.red('coming')}`.includes('coming'));
 });
 
-test('greet user with a name', t => {
+test('rand() returns random value with high bound', t => {
 	t.true(rand(10) < 10);
 });

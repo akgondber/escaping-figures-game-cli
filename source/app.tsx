@@ -71,6 +71,7 @@ type GameStoreItem = {
 	score: number;
 	correctAnswers: number;
 	padLeft: number;
+	gameOver: boolean;
 };
 
 type UpdatableGameStoreProps = Partial<GameStoreItem>;
@@ -281,13 +282,13 @@ export default function App({
 	isUsingFastSpeed = false,
 }: Props) {
 	const [displayBanner, setDisplayBanner] = useState(isShowBanner);
-	const [gameOver, setGameOver] = useState(false);
 	const [gameStore, setGameStore] = useState<GameStoreItem>({
 		roundLines: firstRoundLines,
 		currentLines: spacifyLines(firstRoundLines),
 		score: 0,
 		correctAnswers: 0,
 		padLeft: 0,
+		gameOver: false,
 	});
 
 	const allFigures: string[] = R.uniq(R.flatten(gameStore.roundLines));
@@ -302,7 +303,6 @@ export default function App({
 
 	const resetGame = () => {
 		const newRoundLines = generateRandomFigures(7);
-		setGameOver(false);
 		setFigCount('');
 		setGameStore({
 			padLeft: 0,
@@ -310,6 +310,7 @@ export default function App({
 			currentLines: spacifyLines(newRoundLines),
 			score: 0,
 			correctAnswers: 0,
+			gameOver: false,
 		});
 	};
 
@@ -345,7 +346,7 @@ export default function App({
 	});
 
 	useEffect(() => {
-		if (!gameOver) {
+		if (!gameStore.gameOver) {
 			const gameInterval = setInterval(
 				() => {
 					setGameStore(previousGameStore => {
@@ -363,7 +364,7 @@ export default function App({
 
 						// eslint-disable-next-line n/prefer-global/process
 						if (newPadLeft + widest.length + 35 > process.stdout.columns) {
-							setGameOver(true);
+							updatableProps.gameOver = true;
 						}
 
 						return R.mergeRight(previousGameStore, updatableProps);
@@ -375,9 +376,10 @@ export default function App({
 				clearInterval(gameInterval);
 			};
 		}
-	}, [displayBanner, gameOver, isUsingFastSpeed, gameSpeed, gameStore]);
+	}, [displayBanner, isUsingFastSpeed, gameSpeed, gameStore]);
 
-	const {correctAnswers, currentLines, roundLines, padLeft} = gameStore;
+	const {correctAnswers, currentLines, roundLines, padLeft, gameOver} =
+		gameStore;
 	const currentFigure = allFigures[correctAnswers]!;
 
 	return (

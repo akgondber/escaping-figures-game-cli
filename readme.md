@@ -10,6 +10,10 @@
 $ npm install --global escaping-figures-game-cli
 ```
 
+## Demo
+
+![](media/demo.gif)
+
 ## CLI
 
 ```

@@ -14,6 +14,9 @@ $ npm install --global escaping-figures-game-cli
 
 ![](media/demo.gif)
 
+Emoji mode using the `--emoji` flag.
+![](media/emoji-mode-demo.gif)
+
 ## CLI
 
 ```
@@ -29,6 +32,7 @@ $ escaping-figures-game-cli --help
       --colors, -c      Display figures with different colors
       --speed, -s       Set game speed (the lower the value, the more difficult the passage)
       --fast-speed, -f  Turn on fast speed mode
+      --emoji           Use emojis in the game instead of figures
 
   Examples
       $ escaping-figures-game-cli
@@ -37,6 +41,7 @@ $ escaping-figures-game-cli --help
       $ escaping-figures-game-cli --banner
       $ escaping-figures-game-cli --colors
       $ escaping-figures-game-cli --fast-speed
+      $ escaping-figures-game-cli --emoji
 ```
 
 ## License

@@ -5,12 +5,15 @@ import Gradient from 'ink-gradient';
 import {nanoid} from 'nanoid';
 import figures from 'figures';
 import R from 'rambda';
+import * as emoj from 'node-emoji';
 
+type Mode = 'FIGURES' | 'EMOJI';
 type Props = {
 	isShowBanner?: boolean;
 	isColorsEnabled?: boolean;
 	isUsingFastSpeed?: boolean;
 	speed?: number;
+	mode?: Mode;
 };
 type AnswerItem = 'CORRECT' | 'WRONG' | 'WAITING';
 
@@ -114,18 +117,34 @@ const getCountByIdentityFlattened = (multiArray: string[][]): CountBy =>
 
 const getCoords = (coords: string): number[] => coords.split('x').map(Number);
 
-const generateRandomFigures = (size: number): string[][] => {
-	const figSamples = [
-		figures.lozenge,
-		figures.triangleUp,
-		figures.triangleLeft,
-		figures.triangleRight,
-		figures.triangleDown,
-		figures.hamburger,
-		figures.star,
-		figures.musicNote,
-		figures.lineUpBoldLeftBoldRightBold,
-	];
+const generateRandomFigures = (
+	size: number,
+	mode: Mode = 'FIGURES',
+): string[][] => {
+	const figSamples =
+		mode === 'FIGURES'
+			? [
+					figures.lozenge,
+					figures.triangleUp,
+					figures.triangleLeft,
+					figures.triangleRight,
+					figures.triangleDown,
+					figures.hamburger,
+					figures.star,
+					figures.musicNote,
+					figures.lineUpBoldLeftBoldRightBold,
+			  ]
+			: [
+					emoj.emojify(':upside_down_face:'),
+					emoj.emojify(':boy:'),
+					emoj.emojify(':pizza:'),
+					emoj.emojify(':house:'),
+					emoj.emojify(':dancer:'),
+					emoj.emojify(':sun_with_face:'),
+					emoj.emojify(':unicorn:'),
+					emoj.emojify(':cow:'),
+					emoj.emojify(':kangaroo:'),
+			  ];
 	let selectableFigures = R.clone(figSamples);
 
 	let result: string[][] = [];
@@ -257,8 +276,6 @@ const generateRandomFigures = (size: number): string[][] => {
 	return result;
 };
 
-const firstRoundLines = generateRandomFigures(7);
-
 const cols: string[] = [
 	'red',
 	'green',
@@ -268,10 +285,6 @@ const cols: string[] = [
 	'whiteBright',
 	'cyan',
 ];
-const roundCols = R.map(
-	line => R.map(_ => cols[rand(cols.length)], line),
-	firstRoundLines,
-);
 
 export {rand, calculateSpeedInMs};
 
@@ -280,7 +293,13 @@ export default function App({
 	isColorsEnabled = false,
 	speed = 10,
 	isUsingFastSpeed = false,
+	mode = 'FIGURES',
 }: Props) {
+	const firstRoundLines = generateRandomFigures(7, mode);
+	const roundCols = R.map(
+		line => R.map(_ => cols[rand(cols.length)], line),
+		firstRoundLines,
+	);
 	const [displayBanner, setDisplayBanner] = useState(isShowBanner);
 	const [gameStore, setGameStore] = useState<GameStoreItem>({
 		roundLines: firstRoundLines,
@@ -302,8 +321,9 @@ export default function App({
 	);
 
 	const resetGame = () => {
-		const newRoundLines = generateRandomFigures(7);
+		const newRoundLines = generateRandomFigures(7, mode);
 		setFigCount('');
+		setLastAnswer('WAITING');
 		setGameStore({
 			padLeft: 0,
 			roundLines: newRoundLines,

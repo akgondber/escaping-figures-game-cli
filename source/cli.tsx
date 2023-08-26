@@ -14,6 +14,7 @@ const cli = meow(
 		--colors, -c      Display figures with different colors
 		--speed, -s       Set game speed (the lower the value, the more difficult the passage)
 		--fast-speed, -f  Turn on fast speed mode
+		--emoji           Use emojis in the game instead of figures
 
 	Examples
 		$ escaping-figures-game-cli
@@ -22,6 +23,7 @@ const cli = meow(
 		$ escaping-figures-game-cli --banner
 		$ escaping-figures-game-cli --colors
 		$ escaping-figures-game-cli --fast-speed
+		$ escaping-figures-game-cli --emoji
 `,
 	{
 		importMeta: import.meta,
@@ -46,6 +48,11 @@ const cli = meow(
 				default: false,
 				shortFlag: 'f',
 			},
+			emoji: {
+				type: 'boolean',
+				default: false,
+				shortFlag: 'e',
+			},
 		},
 	},
 );
@@ -58,5 +65,6 @@ render(
 		isColorsEnabled={cli.flags.colors}
 		speed={cli.flags.speed}
 		isUsingFastSpeed={cli.flags.fastSpeed}
+		mode={cli.flags.emoji ? 'EMOJI' : 'FIGURES'}
 	/>,
 );

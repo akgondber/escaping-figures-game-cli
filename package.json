@@ -1,7 +1,7 @@
 {
 	"name": "escaping-figures-game-cli",
 	"description": "Count figure's occurences in the escaping figures matrix",
-	"version": "1.3.1",
+	"version": "2.0.0",
 	"license": "MIT",
 	"author": "Rushan Alyautdinov <akgondber@gmail.com>",
 	"homepage": "https://github.com/akgondber/escaping-figures-game-cli",
@@ -18,7 +18,11 @@
 		"reaction",
 		"concentration",
 		"activerest",
-		"rest"
+		"rest",
+		"emoj",
+		"emoji",
+		"emojis",
+		"activerest"
 	],
 	"bin": "dist/cli.js",
 	"type": "module",
@@ -46,6 +50,7 @@
 		"ink-text-input": "^5.0.1",
 		"meow": "^12.0.1",
 		"nanoid": "^4.0.2",
+		"node-emoji": "^2.1.0",
 		"rambda": "^8.1.0",
 		"react": "^18.2.0"
 	},
